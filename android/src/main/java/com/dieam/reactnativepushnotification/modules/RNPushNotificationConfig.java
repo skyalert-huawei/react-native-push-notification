@@ -13,6 +13,10 @@ class RNPushNotificationConfig {
     private static final String KEY_NOTIFICATION_FOREGROUND = "com.dieam.reactnativepushnotification.notification_foreground";
     private static final String KEY_NOTIFICATION_COLOR = "com.dieam.reactnativepushnotification.notification_color";
 
+    private static final String KEY_CHANNEL_NAME = "com.dieam.reactnativepushnotification.notification_channel_name";
+    private static final String KEY_CHANNEL_DESCRIPTION = "com.dieam.reactnativepushnotification.notification_channel_description";
+    private static final String KEY_CHANNEL_PREFIX = "com.dieam.reactnativepushnotification.channel_prefix";
+
     private static Bundle metadata;
     private Context context;
 
@@ -76,5 +80,38 @@ class RNPushNotificationConfig {
         }
         // Default
         return "fcm_fallback_notification_channel";
+    }
+
+    public String getChannelNameForId(String channelId) {
+        if (channelId != null) {
+            try {
+                return metadata.getString(KEY_CHANNEL_NAME + "." + channelId);
+            } catch (Exception e) {
+                Log.w(RNPushNotification.LOG_TAG, "Unable to find " + KEY_CHANNEL_NAME + "." + channelId + " in manifest. Falling back to default");
+            }
+        }
+        // Default
+        return "rn-push-notification-channel";
+    }
+    public String getChannelDescriptionForId(String channelId) {
+        if (channelId != null) {
+            try {
+                return metadata.getString(KEY_CHANNEL_DESCRIPTION + "." + channelId);
+            } catch (Exception e) {
+                Log.w(RNPushNotification.LOG_TAG, "Unable to find " + KEY_CHANNEL_DESCRIPTION + "." + channelId + " in manifest. Falling back to default");
+            }
+        }
+        // Default
+        return "";
+    }
+
+    public String getChannelPrefix() {
+        try {
+            return metadata.getString(KEY_CHANNEL_PREFIX);
+        } catch (Exception e) {
+            Log.w(RNPushNotification.LOG_TAG, "Unable to find " + KEY_CHANNEL_PREFIX + " in manifest. Falling back to default");
+        }
+        // Default
+        return "rn-push-notification-channel";
     }
 }

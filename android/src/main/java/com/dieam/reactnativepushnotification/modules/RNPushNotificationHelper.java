@@ -23,6 +23,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+
 import androidx.core.app.NotificationCompat;
 
 import android.provider.Settings;
@@ -33,6 +34,7 @@ import android.text.style.StyleSpan;
 import android.service.notification.StatusBarNotification;
 import android.text.Spanned;
 import android.util.Log;
+
 import androidx.core.app.RemoteInput;
 
 import androidx.annotation.RequiresApi;
@@ -74,6 +76,8 @@ public class RNPushNotificationHelper {
     public static final String PREFERENCES_KEY = "rn_push_notification";
     private static final long DEFAULT_VIBRATION = 300L;
 
+    private static final String NOTIFICATION_CHANNEL_ID = "rn-push-notification-channel-id";
+
     private Context context;
     private RNPushNotificationConfig config;
     private SimpleDateFormat formatDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -114,14 +118,14 @@ public class RNPushNotificationHelper {
             Class<?> activityClass = Class.forName(className);
             Intent activityIntent = new Intent(context, activityClass);
 
-            if(bundle != null) {
+            if (bundle != null) {
                 activityIntent.putExtra("notification", bundle);
             }
 
             activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
             context.startActivity(activityIntent);
-        } catch(Exception e) {
+        } catch (Exception e) {
             Log.e(LOG_TAG, "Class not found", e);
             return;
         }
@@ -212,15 +216,15 @@ public class RNPushNotificationHelper {
 
 
     public void sendToNotificationCentre(final Bundle bundle) {
-      RNPushNotificationPicturesAggregator aggregator = new RNPushNotificationPicturesAggregator(new RNPushNotificationPicturesAggregator.Callback() {
-        public void call(Bitmap largeIconImage, Bitmap bigPictureImage, Bitmap bigLargeIconImage) {
-          sendToNotificationCentreWithPicture(bundle, largeIconImage, bigPictureImage, bigLargeIconImage);
-        }
-      });
+        RNPushNotificationPicturesAggregator aggregator = new RNPushNotificationPicturesAggregator(new RNPushNotificationPicturesAggregator.Callback() {
+            public void call(Bitmap largeIconImage, Bitmap bigPictureImage, Bitmap bigLargeIconImage) {
+                sendToNotificationCentreWithPicture(bundle, largeIconImage, bigPictureImage, bigLargeIconImage);
+            }
+        });
 
-      aggregator.setLargeIconUrl(context, bundle.getString("largeIconUrl"));
-      aggregator.setBigLargeIconUrl(context, bundle.getString("bigLargeIconUrl"));
-      aggregator.setBigPictureUrl(context, bundle.getString("bigPictureUrl"));
+        aggregator.setLargeIconUrl(context, bundle.getString("largeIconUrl"));
+        aggregator.setBigLargeIconUrl(context, bundle.getString("bigLargeIconUrl"));
+        aggregator.setBigPictureUrl(context, bundle.getString("bigPictureUrl"));
     }
 
     public void sendToNotificationCentreWithPicture(Bundle bundle, Bitmap largeIconBitmap, Bitmap bigPictureBitmap, Bitmap bigLargeIconBitmap) {
@@ -295,7 +299,7 @@ public class RNPushNotificationHelper {
                         visibility = NotificationCompat.VISIBILITY_PRIVATE;
                 }
             }
-            
+
             String channel_id = bundle.getString("channelId");
 
             //NOTIFICATION ALERT
@@ -307,7 +311,7 @@ public class RNPushNotificationHelper {
             }
             */
 
-           //isTestNotificationAlert = Boolean.parseBoolean(bundle.getString("isTestSystem", "false"));
+            //isTestNotificationAlert = Boolean.parseBoolean(bundle.getString("isTestSystem", "false"));
 
             Uri soundUri = null;
             String soundName = null;
@@ -336,7 +340,7 @@ public class RNPushNotificationHelper {
                 }
             }
 
-            NotificationCompat.Builder notification = new NotificationCompat.Builder(context, this.getChannelId(soundName, soundUri))
+            NotificationCompat.Builder notification = new NotificationCompat.Builder(context, this.getChannelId(soundName, soundUri));
 
 
             notification.setContentTitle(title)
@@ -345,7 +349,7 @@ public class RNPushNotificationHelper {
                     .setPriority(priority)
                     .setAutoCancel(bundle.getBoolean("autoCancel", true))
                     .setOnlyAlertOnce(bundle.getBoolean("onlyAlertOnce", false));
-            
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { // API 24 and higher
                 // Restore showing timestamp on Android 7+
                 // Source: https://developer.android.com/reference/android/app/Notification.Builder.html#setShowWhen(boolean)
@@ -358,17 +362,17 @@ public class RNPushNotificationHelper {
                 // Changing Default mode of notification
                 notification.setDefaults(Notification.DEFAULT_LIGHTS);
             }
-      
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) { // API 20 and higher
-              String group = bundle.getString("group");
+                String group = bundle.getString("group");
 
-              if (group != null) {
-                  notification.setGroup(group);
-              }
+                if (group != null) {
+                    notification.setGroup(group);
+                }
 
-              if (bundle.containsKey("groupSummary") || bundle.getBoolean("groupSummary")) {
-                  notification.setGroupSummary(bundle.getBoolean("groupSummary"));
-              }
+                if (bundle.containsKey("groupSummary") || bundle.getBoolean("groupSummary")) {
+                    notification.setGroupSummary(bundle.getBoolean("groupSummary"));
+                }
             }
 
             String numberString = bundle.getString("number");
@@ -377,7 +381,8 @@ public class RNPushNotificationHelper {
                 notification.setNumber(Integer.parseInt(numberString));
             }
 
-            int smallIconResId, largeIconResId;
+            int smallIconResId = 0;
+            int largeIconResId = 0;
             // Small icon
 //            int smallIconResId = 0;
 
@@ -388,7 +393,7 @@ public class RNPushNotificationHelper {
                 if (smallIconResId == 0) {
                     smallIconResId = res.getIdentifier(smallIcon, "mipmap", packageName);
                 }
-            } else if(smallIcon == null) {
+            } else if (smallIcon == null) {
                 smallIconResId = res.getIdentifier("ic_notification", "mipmap", packageName);
             }
 
@@ -403,8 +408,8 @@ public class RNPushNotificationHelper {
             notification.setSmallIcon(smallIconResId);
 
             // Large icon
-            if(largeIconBitmap == null) {
-                int largeIconResId = 0;
+            if (largeIconBitmap == null) {
+//                int largeIconResId = 0;
 
                 String largeIcon = bundle.getString("largeIcon");
 
@@ -413,7 +418,7 @@ public class RNPushNotificationHelper {
                     if (largeIconResId == 0) {
                         largeIconResId = res.getIdentifier(largeIcon, "mipmap", packageName);
                     }
-                } else if(largeIcon == null) {
+                } else if (largeIcon == null) {
                     largeIconResId = res.getIdentifier("ic_launcher", "mipmap", packageName);
                 }
 
@@ -422,9 +427,9 @@ public class RNPushNotificationHelper {
                     largeIconBitmap = BitmapFactory.decodeResource(res, largeIconResId);
                 }
             }
-            
-            if (largeIconBitmap != null){
-              notification.setLargeIcon(largeIconBitmap);
+
+            if (largeIconBitmap != null) {
+                notification.setLargeIcon(largeIconBitmap);
             }
 
             String message = bundle.getString("message");
@@ -439,37 +444,36 @@ public class RNPushNotificationHelper {
 
             NotificationCompat.Style style;
 
-            if(bigPictureBitmap != null) {
+            if (bigPictureBitmap != null) {
 
-              // Big large icon
-              if(bigLargeIconBitmap == null) {
-                  int bigLargeIconResId = 0;
+                // Big large icon
+                if (bigLargeIconBitmap == null) {
+                    int bigLargeIconResId = 0;
 
-                  String bigLargeIcon = bundle.getString("bigLargeIcon");
+                    String bigLargeIcon = bundle.getString("bigLargeIcon");
 
-                  if (bigLargeIcon != null && !bigLargeIcon.isEmpty()) {
-                    bigLargeIconResId = res.getIdentifier(bigLargeIcon, "mipmap", packageName);
-                    if (bigLargeIconResId != 0) {
-                      bigLargeIconBitmap = BitmapFactory.decodeResource(res, bigLargeIconResId);
+                    if (bigLargeIcon != null && !bigLargeIcon.isEmpty()) {
+                        bigLargeIconResId = res.getIdentifier(bigLargeIcon, "mipmap", packageName);
+                        if (bigLargeIconResId != 0) {
+                            bigLargeIconBitmap = BitmapFactory.decodeResource(res, bigLargeIconResId);
+                        }
                     }
-                  }
-              }
+                }
 
-              style = new NotificationCompat.BigPictureStyle()
-                      .bigPicture(bigPictureBitmap)
-                      .setBigContentTitle(title)
-                      .setSummaryText(message)
-                      .bigLargeIcon(bigLargeIconBitmap);
-            }
-            else {
-              String bigText = bundle.getString("bigText");
+                style = new NotificationCompat.BigPictureStyle()
+                        .bigPicture(bigPictureBitmap)
+                        .setBigContentTitle(title)
+                        .setSummaryText(message)
+                        .bigLargeIcon(bigLargeIconBitmap);
+            } else {
+                String bigText = bundle.getString("bigText");
 
-              if (bigText == null) {
-                  style = new NotificationCompat.BigTextStyle().bigText(message);
-              } else {
-                  Spanned styledText = HtmlCompat.fromHtml(bigText, HtmlCompat.FROM_HTML_MODE_LEGACY);
-                  style = new NotificationCompat.BigTextStyle().bigText(styledText);
-              }
+                if (bigText == null) {
+                    style = new NotificationCompat.BigTextStyle().bigText(message);
+                } else {
+                    Spanned styledText = HtmlCompat.fromHtml(bigText, HtmlCompat.FROM_HTML_MODE_LEGACY);
+                    style = new NotificationCompat.BigTextStyle().bigText(styledText);
+                }
             }
 
             notification.setStyle(style);
@@ -488,10 +492,10 @@ public class RNPushNotificationHelper {
                 intent.putExtra("message_id", messageId);
             }
 
-            Uri soundUri = null;
+//            Uri soundUri = null;
 
             if (!bundle.containsKey("playSound") || bundle.getBoolean("playSound")) {
-                String soundName = bundle.getString("soundName");
+                soundName = bundle.getString("soundName");
 
                 soundUri = getSoundUri(soundName);
 
@@ -519,11 +523,11 @@ public class RNPushNotificationHelper {
             }
 
             String localAlert = bundle.getString("local");
-            if(localAlert != null){
+            if (localAlert != null) {
                 isTestNotificationAlert = Boolean.parseBoolean(bundle.getString("isTestSystem", "false"));
 
-                if(isTestNotificationAlert){
-                    String titleAlert = context.getString(getResourceId( "notification_drill_title", "string"));
+                if (isTestNotificationAlert) {
+                    String titleAlert = context.getString(getResourceId("notification_drill_title", "string"));
                     notification.setContentTitle(titleAlert);
                 }
 
@@ -541,45 +545,45 @@ public class RNPushNotificationHelper {
 
                 long dateNowTime = dateNow.getTime();
                 long dateImpactTime = dateImpact.getTime();
-                long diffTimeImpact  =  dateImpactTime - dateNowTime;
+                long diffTimeImpact = dateImpactTime - dateNowTime;
 
                 //int minutes = (int) ((diffTimeImpact / (1000 * 60 )) % 60);
                 int seconds = (int) (diffTimeImpact / 1000);
 
                 String textTime = readableTimeFormat("seconds", seconds);
-                Log.d(LOG_TAG, ">> ETA parce :"+ textTime);
+                Log.d(LOG_TAG, ">> ETA parce :" + textTime);
 
                 //Location ETA
                 JSONObject notificationJson = new JSONObject(bundle.getString("notification"));
                 String rawMessage = notificationJson.getString("message");
                 Matcher matcher = pattern.matcher(rawMessage);
 
-                String location, message;
+                String location;
                 if (matcher.find()) {
                     location = matcher.group(1);
-                }else{
+                } else {
                     String textUnknown = context.getString(getResourceId("unknown", "string"));
                     location = textUnknown;
                 }
-                Log.d(LOG_TAG, ">> ETA Location :"+ location);
+                Log.d(LOG_TAG, ">> ETA Location :" + location);
 
-                if(diffTimeImpact > 0){
+                if (diffTimeImpact > 0) {
                     message = context.getString(getResourceId("notification_body_incoming", "string"), nameIntensity, textTime, location);
 
-                }else if( diffTimeImpact > -30000){
+                } else if (diffTimeImpact > -30000) {
                     message = context.getString(getResourceId("notification_body_now", "string"), nameIntensity, location);
-                }else{
+                } else {
                     String nameSourceTitle = isTestNotificationAlert ? "notification_drill_title_finish" : "notification_title_finish";
-                    String titleFinish = context.getString(getResourceId( nameSourceTitle, "string"));
+                    String titleFinish = context.getString(getResourceId(nameSourceTitle, "string"));
                     notification.setContentTitle(titleFinish);
 
                     message = context.getString(getResourceId("notification_body_finish", "string"), nameIntensity, location);
                 }
 
-                String messageDrill = isTestNotificationAlert ? context.getString(getResourceId( "notification_drill_body_start", "string")) + " ": "";
+                String messageDrill = isTestNotificationAlert ? context.getString(getResourceId("notification_drill_body_start", "string")) + " " : "";
                 String newMessage = messageDrill + message;
 
-                Log.d(LOG_TAG, ">> Notification msg :"+ newMessage);
+                Log.d(LOG_TAG, ">> Notification msg :" + newMessage);
 
                 notification.setContentText(newMessage);
                 notification.setStyle(new NotificationCompat.BigTextStyle()
@@ -604,32 +608,32 @@ public class RNPushNotificationHelper {
 
                 vibratePattern = new long[]{0, vibration};
 
-                notification.setVibrate(vibratePattern); 
+                notification.setVibrate(vibratePattern);
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { 
-              // Define the shortcutId
-              String shortcutId = bundle.getString("shortcutId");
-              
-              if (shortcutId != null) {
-                notification.setShortcutId(shortcutId);
-              }
- 
-              Long timeoutAfter = (long) bundle.getDouble("timeoutAfter");
-  
-              if (timeoutAfter != null && timeoutAfter >= 0) {
-                notification.setTimeoutAfter(timeoutAfter);
-              }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Define the shortcutId
+                String shortcutId = bundle.getString("shortcutId");
+
+                if (shortcutId != null) {
+                    notification.setShortcutId(shortcutId);
+                }
+
+                Long timeoutAfter = (long) bundle.getDouble("timeoutAfter");
+
+                if (timeoutAfter != null && timeoutAfter >= 0) {
+                    notification.setTimeoutAfter(timeoutAfter);
+                }
             }
 
             Long when = (long) bundle.getDouble("when");
-  
+
             if (when != null && when >= 0) {
-              notification.setWhen(when);
+                notification.setWhen(when);
             }
 
             notification.setUsesChronometer(bundle.getBoolean("usesChronometer", false));
-                
+
             notification.setChannelId(channel_id);
             notification.setContentIntent(pendingIntent);
 
@@ -672,9 +676,9 @@ public class RNPushNotificationHelper {
 
                     PendingIntent pendingActionIntent = PendingIntent.getBroadcast(context, notificationID, actionIntent, flags);
 
-                    if(action.equals("ReplyInput")){
+                    if (action.equals("ReplyInput")) {
                         //Action with inline reply
-                        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT_WATCH){
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT_WATCH) {
                             RemoteInput remoteInput = new RemoteInput.Builder(KEY_TEXT_REPLY)
                                     .setLabel(bundle.getString("reply_placeholder_text"))
                                     .build();
@@ -685,18 +689,16 @@ public class RNPushNotificationHelper {
                                     .build();
 
                             notification.addAction(replyAction);
-                        }
-                        else{
+                        } else {
                             // The notification will not have action
                             break;
                         }
-                    }
-                    else{
+                    } else {
                         // Add "action" for later identifying which button gets pressed
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                          notification.addAction(new NotificationCompat.Action.Builder(icon, action, pendingActionIntent).build());
+                            notification.addAction(new NotificationCompat.Action.Builder(icon, action, pendingActionIntent).build());
                         } else {
-                          notification.addAction(icon, action, pendingActionIntent);
+                            notification.addAction(icon, action, pendingActionIntent);
                         }
                     }
                 }
@@ -721,7 +723,7 @@ public class RNPushNotificationHelper {
                 Notification info = notification.build();
                 info.defaults |= Notification.DEFAULT_LIGHTS;
 
-            //IF USER IS GOLD
+                //IF USER IS GOLD
 /*            if(isUserGold && localKey != null){
                 // IF CRITICAL ALERT is active in local storage
                 // active > strong (3)
@@ -739,18 +741,19 @@ public class RNPushNotificationHelper {
                     notificationWithETA(notificationManager, notification, notificationID, bundle);
                 }*/
 
-            if (bundle.containsKey("tag")) {
-                String tag = bundle.getString("tag");
-                notificationManager.notify(tag, notificationID, info);
-            } else {
-                notificationManager.notify(notificationID, info);
-            }
+                if (bundle.containsKey("tag")) {
+                    String tag = bundle.getString("tag");
+                    notificationManager.notify(tag, notificationID, info);
+                } else {
+                    notificationManager.notify(notificationID, info);
+                }
 
-            // Can't use setRepeating for recurring notifications because setRepeating
-            // is inexact by default starting API 19 and the notifications are not fired
-            // at the exact time. During testing, it was found that notifications could
-            // late by many minutes.
-            this.scheduleNextNotificationIfRepeating(bundle);
+                // Can't use setRepeating for recurring notifications because setRepeating
+                // is inexact by default starting API 19 and the notifications are not fired
+                // at the exact time. During testing, it was found that notifications could
+                // late by many minutes.
+                this.scheduleNextNotificationIfRepeating(bundle);
+            }
         } catch (Exception e) {
             Log.e(LOG_TAG, "failed to send push notification", e);
         }
@@ -850,51 +853,51 @@ public class RNPushNotificationHelper {
         Log.i(LOG_TAG, "Clearing notification: " + notificationID);
 
         NotificationManager notificationManager = notificationManager();
-        if(tag != null) {
-          notificationManager.cancel(tag, notificationID);
+        if (tag != null) {
+            notificationManager.cancel(tag, notificationID);
         } else {
-          notificationManager.cancel(notificationID);
+            notificationManager.cancel(notificationID);
         }
     }
 
     public void clearDeliveredNotifications(ReadableArray identifiers) {
-      NotificationManager notificationManager = notificationManager();
-      for (int index = 0; index < identifiers.size(); index++) {
-        String id = identifiers.getString(index);
-        Log.i(LOG_TAG, "Removing notification with id " + id);
-        notificationManager.cancel(Integer.parseInt(id));
-      }
+        NotificationManager notificationManager = notificationManager();
+        for (int index = 0; index < identifiers.size(); index++) {
+            String id = identifiers.getString(index);
+            Log.i(LOG_TAG, "Removing notification with id " + id);
+            notificationManager.cancel(Integer.parseInt(id));
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     public WritableArray getDeliveredNotifications() {
-      WritableArray result = Arguments.createArray();
-  
-      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        WritableArray result = Arguments.createArray();
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return result;
+        }
+
+        NotificationManager notificationManager = notificationManager();
+        StatusBarNotification delivered[] = notificationManager.getActiveNotifications();
+        Log.i(LOG_TAG, "Found " + delivered.length + " delivered notifications");
+        /*
+         * stay consistent to the return structure in
+         * https://facebook.github.io/react-native/docs/pushnotificationios.html#getdeliverednotifications
+         * but there is no such thing as a 'userInfo'
+         */
+        for (StatusBarNotification notification : delivered) {
+            Notification original = notification.getNotification();
+            Bundle extras = original.extras;
+            WritableMap notif = Arguments.createMap();
+            notif.putString("identifier", "" + notification.getId());
+            notif.putString("title", extras.getString(Notification.EXTRA_TITLE));
+            notif.putString("body", extras.getString(Notification.EXTRA_TEXT));
+            notif.putString("tag", notification.getTag());
+            notif.putString("group", original.getGroup());
+            result.pushMap(notif);
+        }
+
         return result;
-      }
-
-      NotificationManager notificationManager = notificationManager();
-      StatusBarNotification delivered[] = notificationManager.getActiveNotifications();
-      Log.i(LOG_TAG, "Found " + delivered.length + " delivered notifications");
-      /*
-        * stay consistent to the return structure in
-        * https://facebook.github.io/react-native/docs/pushnotificationios.html#getdeliverednotifications
-        * but there is no such thing as a 'userInfo'
-        */
-      for (StatusBarNotification notification : delivered) {
-        Notification original = notification.getNotification();
-        Bundle extras = original.extras;
-        WritableMap notif = Arguments.createMap();
-        notif.putString("identifier", "" + notification.getId());
-        notif.putString("title", extras.getString(Notification.EXTRA_TITLE));
-        notif.putString("body", extras.getString(Notification.EXTRA_TEXT));
-        notif.putString("tag", notification.getTag());
-        notif.putString("group", original.getGroup());
-        result.pushMap(notif);
-      }
-
-      return result;
 
     }
 
@@ -970,54 +973,54 @@ public class RNPushNotificationHelper {
     }
 
     public List<String> listChannels() {
-      List<String> channels = new ArrayList<>();
-      
-      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-          return channels;
-      
-      NotificationManager manager = notificationManager();
+        List<String> channels = new ArrayList<>();
 
-      if (manager == null)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+            return channels;
+
+        NotificationManager manager = notificationManager();
+
+        if (manager == null)
+            return channels;
+
+        List<NotificationChannel> listChannels = manager.getNotificationChannels();
+
+        for (NotificationChannel channel : listChannels) {
+            channels.add(channel.getId());
+        }
+
         return channels;
-
-      List<NotificationChannel> listChannels = manager.getNotificationChannels();
-
-      for(NotificationChannel channel : listChannels) {
-        channels.add(channel.getId());
-      }
-
-      return channels;
     }
 
     public boolean channelBlocked(String channel_id) {
-      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-          return false;
-      
-      NotificationManager manager = notificationManager();
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+            return false;
 
-      if (manager == null)
-          return false;
+        NotificationManager manager = notificationManager();
 
-      NotificationChannel channel = manager.getNotificationChannel(channel_id);
+        if (manager == null)
+            return false;
 
-      if(channel == null)
-          return false;
+        NotificationChannel channel = manager.getNotificationChannel(channel_id);
 
-      return NotificationManager.IMPORTANCE_NONE == channel.getImportance();
+        if (channel == null)
+            return false;
+
+        return NotificationManager.IMPORTANCE_NONE == channel.getImportance();
     }
 
     public boolean channelExists(String channel_id) {
-      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-          return false;
-      
-      NotificationManager manager = notificationManager();
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+            return false;
 
-      if (manager == null)
-          return false;
+        NotificationManager manager = notificationManager();
 
-      NotificationChannel channel = manager.getNotificationChannel(channel_id);
+        if (manager == null)
+            return false;
 
-      return channel != null;
+        NotificationChannel channel = manager.getNotificationChannel(channel_id);
+
+        return channel != null;
     }
 
     @TargetApi(26)
@@ -1042,7 +1045,7 @@ public class RNPushNotificationHelper {
         final String importanceString = bundle.getString("importance");
 
         if (importanceString != null) {
-            switch(importanceString.toLowerCase()) {
+            switch (importanceString.toLowerCase()) {
                 case "default":
                     importance = NotificationManager.IMPORTANCE_DEFAULT;
                     break;
@@ -1067,17 +1070,30 @@ public class RNPushNotificationHelper {
                 default:
                     importance = NotificationManager.IMPORTANCE_HIGH;
             }
-
-            manager.createNotificationChannel(channel);
-
-            return true;
         }
+
+
+        NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
+        channel.setDescription(channelDescription);
+        channel.enableLights(true);
+        channel.enableVibration(true);
+
+        if (soundName != null && soundUri != null) {
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .build();
+
+            channel.setSound(soundUri, audioAttributes);
         }
+
+        manager.createNotificationChannel(channel);
+    }
 
     public void deleteChannel(String channel_id) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             return;
-        
+
         NotificationManager manager = notificationManager();
 
         if (manager == null)
@@ -1095,12 +1111,12 @@ public class RNPushNotificationHelper {
         NotificationChannel channel = manager.getNotificationChannel(channel_id);
 
         if (
-          channel == null && channel_name != null && channel_description != null ||
-          channel != null &&
-          (
-            channel_name != null && !channel_name.equals(channel.getName()) ||
-            channel_description != null && !channel_description.equals(channel.getDescription())
-          )
+                channel == null && channel_name != null && channel_description != null ||
+                        channel != null &&
+                                (
+                                        channel_name != null && !channel_name.equals(channel.getName()) ||
+                                                channel_description != null && !channel_description.equals(channel.getDescription())
+                                )
         ) {
             // If channel doesn't exist create a new one.
             // If channel name or description is updated then update the existing channel.
@@ -1128,12 +1144,12 @@ public class RNPushNotificationHelper {
         }
 
 
-        NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
-        channel.setDescription(channelDescription);
-        channel.enableLights(true);
-        channel.enableVibration(true);
+//        NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
+//        channel.setDescription(channelDescription);
+//        channel.enableLights(true);
+//        channel.enableVibration(true);
 
-        if (soundName != null && soundUri != null) {
+        if (soundUri != null) {
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .setUsage(AudioAttributes.USAGE_ALARM)
@@ -1157,7 +1173,7 @@ public class RNPushNotificationHelper {
         String soundName = channelInfo.hasKey("soundName") ? channelInfo.getString("soundName") : "default";
         int importance = channelInfo.hasKey("importance") ? channelInfo.getInt("importance") : 4;
         boolean vibrate = channelInfo.hasKey("vibrate") && channelInfo.getBoolean("vibrate");
-        long[] vibratePattern = vibrate ? new long[] { 0, DEFAULT_VIBRATION } : null;
+        long[] vibratePattern = vibrate ? new long[]{0, DEFAULT_VIBRATION} : null;
 
         NotificationManager manager = notificationManager();
 
@@ -1165,7 +1181,7 @@ public class RNPushNotificationHelper {
 
         return checkOrCreateChannel(manager, channelId, channelName, channelDescription, soundUri, importance, vibratePattern);
     }
-    
+
     public boolean isApplicationInForeground() {
         ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         List<RunningAppProcessInfo> processInfos = activityManager.getRunningAppProcesses();
@@ -1187,40 +1203,40 @@ public class RNPushNotificationHelper {
     }
 
 
-    private void userDataAsyncStorage(){
-        try{
+    private void userDataAsyncStorage() {
+        try {
             RNAsyncStorage RNStorage = new RNAsyncStorage(context);
             isActiveETA = true; //RNStorage.getUserETA();
             isActiveCriticalAlerts = false; //RNStorage.getUserDisplayCriticalAlerts();
-        }catch (Exception e){
+        } catch (Exception e) {
             Log.e(LOG_TAG, "NO GET ASYNC STORAGE " + e);
         }
     }
 
-    private void alertsFilterDND(NotificationManager notificationManager, String intensity){
+    private void alertsFilterDND(NotificationManager notificationManager, String intensity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             int statusDND = 0;
-            try{
+            try {
                 statusDND = Settings.Global.getInt(context.getContentResolver(), "zen_mode");
             } catch (Settings.SettingNotFoundException e) {
                 e.printStackTrace();
                 Log.e(LOG_TAG, "NOT GET STATE DND");
             }
 
-            if(statusDND != 0){
+            if (statusDND != 0) {
                 Log.d(LOG_TAG, "Is active DND ");
                 int level = Integer.parseInt(intensity);
                 int statusFilter = level >= 3 ? NotificationManager.INTERRUPTION_FILTER_ALARMS : NotificationManager.INTERRUPTION_FILTER_NONE;
                 changeInterruptionFiler(notificationManager, statusFilter, context);
-            }else{
+            } else {
                 Log.d(LOG_TAG, "Is disable DND");
             }
         }
     }
 
     private void notificationWithETA(final NotificationManager notificationManager,
-                                 final NotificationCompat.Builder notification,
-                                 final int notificationID, Bundle bundle){
+                                     final NotificationCompat.Builder notification,
+                                     final int notificationID, Bundle bundle) {
         try {
             final Timer timer;
             final Date dateImpact;
@@ -1237,7 +1253,7 @@ public class RNPushNotificationHelper {
 
             if (matcher.find()) {
                 message = matcher.group(1);
-            }else{
+            } else {
                 message = "DESCONOCIDO";
             }
 
@@ -1257,14 +1273,14 @@ public class RNPushNotificationHelper {
                 public void run() {
                     Date dateNow = new Date(System.currentTimeMillis());
 
-                    long diffTimeImpact  =  dateImpact.getTime() - dateNow.getTime();
+                    long diffTimeImpact = dateImpact.getTime() - dateNow.getTime();
 
-                    int minutes = (int) ((diffTimeImpact / (1000 * 60 )) % 60);
-                    int seconds = (int) (diffTimeImpact / 1000) % 60 ;
+                    int minutes = (int) ((diffTimeImpact / (1000 * 60)) % 60);
+                    int seconds = (int) (diffTimeImpact / 1000) % 60;
 
                     String textTime = readableTimeFormat("minutes", minutes) + readableTimeFormat("seconds", seconds);
 
-                    Log.d(LOG_TAG, "· ID:("+notificationID+") Remaining "+ textTime);
+                    Log.d(LOG_TAG, "· ID:(" + notificationID + ") Remaining " + textTime);
 
                     int idStringCollapsed = getResourceId("notification_message_collapsed", "string");
                     String messageCollapsed = context.getString(idStringCollapsed, message, textTime);
@@ -1286,18 +1302,18 @@ public class RNPushNotificationHelper {
                     //Group notifications
                     //notification.setGroup(groupBySegment);
 
-                    if(seconds <= 0){
+                    if (seconds <= 0) {
                         timer.cancel();
                         notificationManager.notify(notificationID, notification.build());
-                        Log.d(LOG_TAG, ">> Finish timer for "+notificationID+"<<");
-                    }else{
+                        Log.d(LOG_TAG, ">> Finish timer for " + notificationID + "<<");
+                    } else {
                         //Send Notification
                         notificationManager.notify(notificationID, notification.build());
                     }
                 }
             }, 0, 1000);
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             Log.e(LOG_TAG, "ETA could not be obtained" + e.getMessage());
         }
     }
@@ -1359,57 +1375,57 @@ public class RNPushNotificationHelper {
         }
     }
 
-    private void setNewSoundNotification(int seconds, int notificationID){
+    private void setNewSoundNotification(int seconds, int notificationID) {
         //TODO: CHANGE SOUND
         // 10 | 20 | 30 | 60 | 80
-        switch(seconds) {
+        switch (seconds) {
             case 10:
-                Log.d(LOG_TAG, "· ("+notificationID+") Sound -> less 10 change sound.mp3");
+                Log.d(LOG_TAG, "· (" + notificationID + ") Sound -> less 10 change sound.mp3");
                 break;
             case 20:
-                Log.d(LOG_TAG, "· ("+notificationID+") Sound -> less 20 seconds.mp3");
+                Log.d(LOG_TAG, "· (" + notificationID + ") Sound -> less 20 seconds.mp3");
                 break;
             case 30:
-                Log.d(LOG_TAG, "· ("+notificationID+") Sound -> less 30 seconds.mp3");
+                Log.d(LOG_TAG, "· (" + notificationID + ") Sound -> less 30 seconds.mp3");
                 break;
             case 60:
-                Log.d(LOG_TAG, "· ("+notificationID+") Sound -> less 1 minute.mp3");
+                Log.d(LOG_TAG, "· (" + notificationID + ") Sound -> less 1 minute.mp3");
                 break;
             case 80:
-                Log.d(LOG_TAG, "· ("+notificationID+") Sound -> less 1 minute 20 seconds.mp3");
+                Log.d(LOG_TAG, "· (" + notificationID + ") Sound -> less 1 minute 20 seconds.mp3");
                 break;
             default:
                 break;
         }
     }
 
-    private int getResourceId(String name, String defType){
+    private int getResourceId(String name, String defType) {
         return context.getResources().getIdentifier(name, defType, context.getPackageName());
     }
 
-    private int getColorIntensity(int level){
-        int idColorLevel = getResourceId("intensity_"+level, "color");
+    private int getColorIntensity(int level) {
+        int idColorLevel = getResourceId("intensity_" + level, "color");
         return context.getResources().getColor(idColorLevel);
     }
 
-    private String getNameIntensity(int level){
-        int idColorLevel = getResourceId("intensity_name_"+level, "string");
+    private String getNameIntensity(int level) {
+        int idColorLevel = getResourceId("intensity_name_" + level, "string");
         return context.getString(idColorLevel);
     }
 
-    private String readableTimeFormat(String unit, int time){
-        if(unit.equals("minutes")){
+    private String readableTimeFormat(String unit, int time) {
+        if (unit.equals("minutes")) {
             int idSourceTextMin = getResourceId("plural_time_minutes", "plurals");
             return time >= 1 ? context.getResources().getQuantityString(idSourceTextMin, time, time) + ", " : "";
-        }else if(unit.equals("seconds")){
+        } else if (unit.equals("seconds")) {
             int idSourceTextSec = getResourceId("plural_time_seconds", "plurals");
             return context.getResources().getQuantityString(idSourceTextSec, time, time);
-        }else{
+        } else {
             return "";
         }
     }
 
-    private SpannableStringBuilder setColorIntensity(String message, int intensity){
+    private SpannableStringBuilder setColorIntensity(String message, int intensity) {
 
         int startIndexIntensity = message.indexOf(":") + 1;
         int endIndexIntensity = message.length() - 1;
