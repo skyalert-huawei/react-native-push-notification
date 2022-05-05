@@ -227,7 +227,7 @@ public class RNPushNotificationHelper {
         aggregator.setBigPictureUrl(context, bundle.getString("bigPictureUrl"));
     }
 
-    public void sendToNotificationCentreWithPicture(Bundle bundle, Bitmap largeIconBitmap, Bitmap bigPictureBitmap, Bitmap bigLargeIconBitmap) {
+    public void sendToNotificationCentreWithPicture(Bundle mBundle, Bitmap largeIconBitmap, Bitmap bigPictureBitmap, Bitmap bigLargeIconBitmap) {
         try {
             Class intentClass = getMainActivityClass();
             if (intentClass == null) {
@@ -235,13 +235,15 @@ public class RNPushNotificationHelper {
                 return;
             }
 
+            Bundle bundle = mBundle.getBundle("data");
+
             if (bundle.getString("message") == null) {
                 // this happens when a 'data' notification is received - we do not synthesize a local notification in this case
                 Log.d(LOG_TAG, "Ignore this message if you sent data-only notification. Cannot send to notification centre because there is no 'message' field in: " + bundle);
                 return;
             }
 
-            String notificationIdString = bundle.getString("id");
+            String notificationIdString = mBundle.getString("id");
             if (notificationIdString == null) {
                 Log.e(LOG_TAG, "No notification ID specified for the notification");
                 return;
@@ -300,8 +302,6 @@ public class RNPushNotificationHelper {
                 }
             }
 
-            String channel_id = bundle.getString("channelId");
-
             //NOTIFICATION ALERT
             //String typeNotification = bundle.getString("local");
             //Log.d(LOG_TAG, "type notification bundle "+typeNotification);
@@ -313,36 +313,15 @@ public class RNPushNotificationHelper {
 
             //isTestNotificationAlert = Boolean.parseBoolean(bundle.getString("isTestSystem", "false"));
 
-            Uri soundUri = null;
-            String soundName = null;
 
-            if (!bundle.containsKey("playSound") || bundle.getBoolean("playSound")) {
-                soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                soundName = bundle.getString("soundName");
-                Log.d(LOG_TAG, "set sound " + soundName);
-                if (soundName != null) {
-                    if (!"default".equalsIgnoreCase(soundName)) {
 
-                        // sound name can be full filename, or just the resource name.
-                        // So the strings 'my_sound.mp3' AND 'my_sound' are accepted
-                        // The reason is to make the iOS and android javascript interfaces compatible
+            String channel_id = bundle.getString("channelId");
 
-                        int resId;
-                        if (context.getResources().getIdentifier(soundName, "raw", context.getPackageName()) != 0) {
-                            resId = context.getResources().getIdentifier(soundName, "raw", context.getPackageName());
-                        } else {
-                            soundName = soundName.substring(0, soundName.lastIndexOf('.'));
-                            resId = context.getResources().getIdentifier(soundName, "raw", context.getPackageName());
-                        }
-
-                        soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + context.getPackageName() + "/" + resId);
-                    }
-                }
+            if(channel_id == null) {
+                channel_id = this.config.getNotificationDefaultChannelId();
             }
 
-            NotificationCompat.Builder notification = new NotificationCompat.Builder(context, this.getChannelId(soundName, soundUri));
-
-
+            NotificationCompat.Builder notification = new NotificationCompat.Builder(context, channel_id);
             notification.setContentTitle(title)
                     .setTicker(bundle.getString("ticker"))
                     .setVisibility(visibility)
@@ -492,10 +471,10 @@ public class RNPushNotificationHelper {
                 intent.putExtra("message_id", messageId);
             }
 
-//            Uri soundUri = null;
+            Uri soundUri = null;
 
             if (!bundle.containsKey("playSound") || bundle.getBoolean("playSound")) {
-                soundName = bundle.getString("soundName");
+                String soundName = bundle.getString("soundName");
 
                 soundUri = getSoundUri(soundName);
 
@@ -596,8 +575,6 @@ public class RNPushNotificationHelper {
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE : PendingIntent.FLAG_UPDATE_CURRENT);
 
             NotificationManager notificationManager = notificationManager();
-
-            checkOrCreateChannel(notificationManager, soundName, soundUri);
 
             long[] vibratePattern = new long[]{0};
 
@@ -1023,73 +1000,6 @@ public class RNPushNotificationHelper {
         return channel != null;
     }
 
-    @TargetApi(26)
-    private void checkOrCreateChannel(NotificationManager manager, String soundName, Uri soundUri) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-            return;
-        if (manager == null)
-            return;
-
-        String channelId = this.getChannelId(soundName, soundUri);
-
-        if (manager.getNotificationChannel(channelId) != null) {
-            return;
-        }
-
-        Bundle bundle = new Bundle();
-
-        String channelName = this.config.getChannelNameForId(soundName);
-        String channelDescription = this.config.getChannelDescriptionForId(soundName);
-
-        int importance = NotificationManager.IMPORTANCE_HIGH;
-        final String importanceString = bundle.getString("importance");
-
-        if (importanceString != null) {
-            switch (importanceString.toLowerCase()) {
-                case "default":
-                    importance = NotificationManager.IMPORTANCE_DEFAULT;
-                    break;
-                case "max":
-                    importance = NotificationManager.IMPORTANCE_MAX;
-                    break;
-                case "high":
-                    importance = NotificationManager.IMPORTANCE_HIGH;
-                    break;
-                case "low":
-                    importance = NotificationManager.IMPORTANCE_LOW;
-                    break;
-                case "min":
-                    importance = NotificationManager.IMPORTANCE_MIN;
-                    break;
-                case "none":
-                    importance = NotificationManager.IMPORTANCE_NONE;
-                    break;
-                case "unspecified":
-                    importance = NotificationManager.IMPORTANCE_UNSPECIFIED;
-                    break;
-                default:
-                    importance = NotificationManager.IMPORTANCE_HIGH;
-            }
-        }
-
-
-        NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
-        channel.setDescription(channelDescription);
-        channel.enableLights(true);
-        channel.enableVibration(true);
-
-        if (soundName != null && soundUri != null) {
-            AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .build();
-
-            channel.setSound(soundUri, audioAttributes);
-        }
-
-        manager.createNotificationChannel(channel);
-    }
-
     public void deleteChannel(String channel_id) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             return;
@@ -1143,22 +1053,6 @@ public class RNPushNotificationHelper {
             return true;
         }
 
-
-//        NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
-//        channel.setDescription(channelDescription);
-//        channel.enableLights(true);
-//        channel.enableVibration(true);
-
-        if (soundUri != null) {
-            AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .build();
-
-            channel.setSound(soundUri, audioAttributes);
-        }
-
-        manager.createNotificationChannel(channel);
         return false;
     }
 
