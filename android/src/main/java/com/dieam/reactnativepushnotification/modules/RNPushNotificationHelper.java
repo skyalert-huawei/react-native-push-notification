@@ -42,21 +42,26 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.text.HtmlCompat;
 
 import com.dieam.reactnativepushnotification.helpers.RNAsyncStorage;
+import com.dieam.reactnativepushnotification.models.EarthquakeAlert;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -74,6 +79,8 @@ import static com.dieam.reactnativepushnotification.modules.RNPushNotification.K
 
 public class RNPushNotificationHelper {
     public static final String PREFERENCES_KEY = "rn_push_notification";
+    public static final String ALERT_PREFERENCES_KEY = "alert_push_notification";
+
     private static final long DEFAULT_VIBRATION = 300L;
 
     private static final String NOTIFICATION_CHANNEL_ID = "rn-push-notification-channel-id";
@@ -86,11 +93,14 @@ public class RNPushNotificationHelper {
     private boolean isUserGold = false; //SIMULATOR USER GOLD
 
     private final SharedPreferences scheduledNotificationsPersistence;
+    private final SharedPreferences alertNotificationsPersistence;
+
 
     public RNPushNotificationHelper(Application context) {
         this.context = context;
         this.config = new RNPushNotificationConfig(context);
         this.scheduledNotificationsPersistence = context.getSharedPreferences(RNPushNotificationHelper.PREFERENCES_KEY, Context.MODE_PRIVATE);
+        this.alertNotificationsPersistence = context.getSharedPreferences(RNPushNotificationHelper.ALERT_PREFERENCES_KEY, Context.MODE_PRIVATE);
     }
 
     public Class getMainActivityClass() {
@@ -314,10 +324,9 @@ public class RNPushNotificationHelper {
             //isTestNotificationAlert = Boolean.parseBoolean(bundle.getString("isTestSystem", "false"));
 
 
-
             String channel_id = bundle.getString("channelId");
 
-            if(channel_id == null) {
+            if (channel_id == null) {
                 channel_id = this.config.getNotificationDefaultChannelId();
             }
 
@@ -724,6 +733,8 @@ public class RNPushNotificationHelper {
                 } else {
                     notificationManager.notify(notificationID, info);
                 }
+
+                storeAlertEvent(bundle);
 
                 // Can't use setRepeating for recurring notifications because setRepeating
                 // is inexact by default starting API 19 and the notifications are not fired
@@ -1334,4 +1345,45 @@ public class RNPushNotificationHelper {
 
         return messageStyle;
     }
+
+
+    private void storeAlertEvent(Bundle earthquakeAlert) throws JSONException {
+        EarthquakeAlert earthquakeAlertData = new EarthquakeAlert(earthquakeAlert);
+
+        /**
+         Keys used to store alert groups
+         */
+        String quakeId = earthquakeAlertData.quake.id;
+        String segmentId = earthquakeAlertData.local.segment.id;
+        String sharedDefaultKey = "EQ#".concat(quakeId);
+
+        ArrayList<EarthquakeAlert> segmentToStore = new ArrayList<>();
+        HashMap<String, List<EarthquakeAlert>> quakeToStore = new HashMap<>();
+        Gson gson = new Gson();
+
+        Map<String, ?> existingQuake = alertNotificationsPersistence.getAll();
+        if (existingQuake.containsKey(sharedDefaultKey)) {
+            String loadedEarthquakeAlert = (String) existingQuake.get(sharedDefaultKey);
+
+            JSONObject JsonList = new JSONObject(loadedEarthquakeAlert);
+            JSONArray JsonToStore = JsonList.getJSONArray(segmentId);
+
+            Type type = new TypeToken<List<EarthquakeAlert>>() {
+            }.getType();
+
+            segmentToStore = gson.fromJson(JsonToStore.toString(), type);
+        }
+
+
+        segmentToStore.add(0, earthquakeAlertData);
+        quakeToStore.put(segmentId, segmentToStore);
+
+        SharedPreferences.Editor editor = alertNotificationsPersistence.edit();
+        String quakeToStoreStringify = gson.toJson(quakeToStore);
+        editor.putString(sharedDefaultKey, quakeToStoreStringify);
+        editor.apply();
+
+    }
+
+
 }
