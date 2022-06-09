@@ -705,6 +705,10 @@ public class RNPushNotificationHelper {
                 editor.apply();
             }
 
+            if(bundle.getString("quake", null) != null) {
+                storeAlertEvent(bundle);
+            }
+
             if (!(this.isApplicationInForeground() && bundle.getBoolean("ignoreInForeground"))) {
                 Notification info = notification.build();
                 info.defaults |= Notification.DEFAULT_LIGHTS;
@@ -733,8 +737,6 @@ public class RNPushNotificationHelper {
                 } else {
                     notificationManager.notify(notificationID, info);
                 }
-
-                storeAlertEvent(bundle);
 
                 // Can't use setRepeating for recurring notifications because setRepeating
                 // is inexact by default starting API 19 and the notifications are not fired
