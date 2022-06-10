@@ -5,11 +5,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class Location {
-    public JSONArray coordinates;
+    public double coordinates[] = new double[2];
     public String type;
 
     public Location(JSONObject location) throws JSONException {
-        this.coordinates = location.getJSONArray("coordinates");
+        JSONArray coordinates = location.getJSONArray("coordinates");
+        this.coordinates[0] = coordinates.getDouble(0);
+        this.coordinates[1] = coordinates.getDouble(1);
         this.type = location.getString("type");
     }
 }

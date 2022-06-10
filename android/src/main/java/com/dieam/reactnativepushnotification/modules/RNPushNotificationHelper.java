@@ -1367,15 +1367,19 @@ public class RNPushNotificationHelper {
         if (existingQuake.containsKey(sharedDefaultKey)) {
             String loadedEarthquakeAlert = (String) existingQuake.get(sharedDefaultKey);
 
-            JSONObject JsonList = new JSONObject(loadedEarthquakeAlert);
-            JSONArray JsonToStore = JsonList.getJSONArray(segmentId);
-
-            Type type = new TypeToken<List<EarthquakeAlert>>() {
+            Type quakeType = new TypeToken<HashMap<String, List<EarthquakeAlert>>>() {
             }.getType();
 
-            segmentToStore = gson.fromJson(JsonToStore.toString(), type);
-        }
+            quakeToStore = gson.fromJson(loadedEarthquakeAlert, quakeType);
+            JSONObject JsonList = new JSONObject(loadedEarthquakeAlert);
+            if(JsonList.has(segmentId)) {
 
+                JSONArray JsonToStore = JsonList.getJSONArray(segmentId);
+                Type segmentType = new TypeToken<List<EarthquakeAlert>>() {
+                }.getType();
+                segmentToStore = gson.fromJson(JsonToStore.toString(), segmentType);
+            }
+        }
 
         segmentToStore.add(0, earthquakeAlertData);
         quakeToStore.put(segmentId, segmentToStore);
