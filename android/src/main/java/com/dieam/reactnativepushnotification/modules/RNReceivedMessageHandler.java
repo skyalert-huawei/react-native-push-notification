@@ -175,7 +175,6 @@ public class RNReceivedMessageHandler {
         RNPushNotificationJsDelivery jsDelivery = new RNPushNotificationJsDelivery(context);
         bundle.putBoolean("foreground", isForeground);
         bundle.putBoolean("userInteraction", false);
-        jsDelivery.notifyNotification(bundle);
 
         // If contentAvailable is set to true, then send out a remote fetch event
         if (bundle.getString("contentAvailable", "false").equalsIgnoreCase("true")) {
@@ -187,6 +186,7 @@ public class RNReceivedMessageHandler {
 
             pushNotificationHelper.sendToNotificationCentre(bundle);
         }
+        jsDelivery.notifyNotification(bundle);
     }
 
     private String getLocalizedString(String text, String locKey, String[] locArgs) {
