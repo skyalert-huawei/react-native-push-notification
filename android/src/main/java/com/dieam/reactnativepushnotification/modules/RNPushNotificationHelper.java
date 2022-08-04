@@ -481,13 +481,14 @@ public class RNPushNotificationHelper {
             }
 
             Uri soundUri = null;
-
+            String soundName = null;
             if (!bundle.containsKey("playSound") || bundle.getBoolean("playSound")) {
-                String soundName = bundle.getString("soundName");
+                soundName = bundle.getString("soundName");
 
                 soundUri = getSoundUri(soundName);
 
                 notification.setSound(soundUri);
+                channel_id = getChannelId(soundName, soundUri);
             }
 
             if (soundUri == null || Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -584,6 +585,7 @@ public class RNPushNotificationHelper {
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE : PendingIntent.FLAG_UPDATE_CURRENT);
 
             NotificationManager notificationManager = notificationManager();
+            checkOrCreateChannel(notificationManager, soundName, soundUri);
 
             long[] vibratePattern = new long[]{0};
 
@@ -1025,52 +1027,76 @@ public class RNPushNotificationHelper {
         manager.deleteNotificationChannel(channel_id);
     }
 
-    private boolean checkOrCreateChannel(NotificationManager manager, String channel_id, String channel_name, String channel_description, Uri soundUri, int importance, long[] vibratePattern) {
+    @TargetApi(26)
+    private void checkOrCreateChannel(NotificationManager manager, String soundName, Uri soundUri) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-            return false;
+            return;
         if (manager == null)
-            return false;
+            return;
 
-        NotificationChannel channel = manager.getNotificationChannel(channel_id);
+        String channelId = this.getChannelId(soundName, soundUri);
 
-        if (
-                channel == null && channel_name != null && channel_description != null ||
-                        channel != null &&
-                                (
-                                        channel_name != null && !channel_name.equals(channel.getName()) ||
-                                                channel_description != null && !channel_description.equals(channel.getDescription())
-                                )
-        ) {
-            // If channel doesn't exist create a new one.
-            // If channel name or description is updated then update the existing channel.
-            channel = new NotificationChannel(channel_id, channel_name, importance);
-
-            channel.setDescription(channel_description);
-            channel.enableLights(true);
-            channel.enableVibration(vibratePattern != null);
-            channel.setVibrationPattern(vibratePattern);
-
-            if (soundUri != null) {
-                AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                        .build();
-
-                channel.setSound(soundUri, audioAttributes);
-            } else {
-                channel.setSound(null, null);
-            }
-
-            manager.createNotificationChannel(channel);
-
-            return true;
+        if (manager.getNotificationChannel(channelId) != null) {
+            return;
         }
 
-        return false;
+        Bundle bundle = new Bundle();
+
+        String channelName = this.config.getChannelNameForId(soundName);
+        String channelDescription = this.config.getChannelDescriptionForId(soundName);
+
+        int importance = NotificationManager.IMPORTANCE_HIGH;
+        final String importanceString = bundle.getString("importance");
+
+        if (importanceString != null) {
+            switch(importanceString.toLowerCase()) {
+                case "default":
+                    importance = NotificationManager.IMPORTANCE_DEFAULT;
+                    break;
+                case "max":
+                    importance = NotificationManager.IMPORTANCE_MAX;
+                    break;
+                case "high":
+                    importance = NotificationManager.IMPORTANCE_HIGH;
+                    break;
+                case "low":
+                    importance = NotificationManager.IMPORTANCE_LOW;
+                    break;
+                case "min":
+                    importance = NotificationManager.IMPORTANCE_MIN;
+                    break;
+                case "none":
+                    importance = NotificationManager.IMPORTANCE_NONE;
+                    break;
+                case "unspecified":
+                    importance = NotificationManager.IMPORTANCE_UNSPECIFIED;
+                    break;
+                default:
+                    importance = NotificationManager.IMPORTANCE_HIGH;
+            }
+        }
+
+
+        NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
+        channel.setDescription(channelDescription);
+        channel.enableLights(true);
+        channel.enableVibration(true);
+
+        if (soundName != null && soundUri != null) {
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .build();
+
+            channel.setSound(soundUri, audioAttributes);
+        }
+
+        manager.createNotificationChannel(channel);
     }
 
     public boolean createChannel(ReadableMap channelInfo) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+        return false;
+        /*if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             return false;
 
         String channelId = channelInfo.getString("channelId");
@@ -1084,9 +1110,9 @@ public class RNPushNotificationHelper {
 
         NotificationManager manager = notificationManager();
 
-        Uri soundUri = playSound ? getSoundUri(soundName) : null;
+        Uri soundUri = playSound ? getSoundUri(soundName) : null;*/
 
-        return checkOrCreateChannel(manager, channelId, channelName, channelDescription, soundUri, importance, vibratePattern);
+        //return checkOrCreateChannel(manager, channelId, channelName, channelDescription, soundUri, importance, vibratePattern);
     }
 
     public boolean isApplicationInForeground() {
