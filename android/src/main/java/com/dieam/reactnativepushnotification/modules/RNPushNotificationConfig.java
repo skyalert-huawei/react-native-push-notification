@@ -82,23 +82,23 @@ class RNPushNotificationConfig {
         return "fcm_fallback_notification_channel";
     }
 
-    public String getChannelNameForId(String channelId) {
-        if (channelId != null) {
+    public String getChannelNameForId(String soundName) {
+        if (soundName != null) {
             try {
-                return metadata.getString(KEY_CHANNEL_NAME + "." + channelId);
+                return metadata.getString(KEY_CHANNEL_NAME + "." + soundName);
             } catch (Exception e) {
-                Log.w(RNPushNotification.LOG_TAG, "Unable to find " + KEY_CHANNEL_NAME + "." + channelId + " in manifest. Falling back to default");
+                Log.w(RNPushNotification.LOG_TAG, "Unable to find " + KEY_CHANNEL_NAME + "." + soundName + " in manifest. Falling back to default");
             }
         }
         // Default
         return "rn-push-notification-channel";
     }
-    public String getChannelDescriptionForId(String channelId) {
-        if (channelId != null) {
+    public String getChannelDescriptionForId(String soundName) {
+        if (soundName != null) {
             try {
-                return metadata.getString(KEY_CHANNEL_DESCRIPTION + "." + channelId);
+                return metadata.getString(KEY_CHANNEL_DESCRIPTION + "." + soundName);
             } catch (Exception e) {
-                Log.w(RNPushNotification.LOG_TAG, "Unable to find " + KEY_CHANNEL_DESCRIPTION + "." + channelId + " in manifest. Falling back to default");
+                Log.w(RNPushNotification.LOG_TAG, "Unable to find " + KEY_CHANNEL_DESCRIPTION + "." + soundName + " in manifest. Falling back to default");
             }
         }
         // Default
