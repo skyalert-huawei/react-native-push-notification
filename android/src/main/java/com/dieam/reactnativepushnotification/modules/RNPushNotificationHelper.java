@@ -246,6 +246,9 @@ public class RNPushNotificationHelper {
             }
 
             Bundle bundle = mBundle.getBundle("data");
+            if(bundle == null) {
+                bundle = mBundle;
+            }
 
             if (bundle.getString("message") == null) {
                 // this happens when a 'data' notification is received - we do not synthesize a local notification in this case
