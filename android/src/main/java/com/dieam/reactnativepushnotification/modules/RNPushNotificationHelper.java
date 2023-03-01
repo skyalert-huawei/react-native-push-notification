@@ -1052,8 +1052,8 @@ public class RNPushNotificationHelper {
             noExtensionSoundName = soundName.substring(0, soundName.lastIndexOf('.'));
         }
 
-        String channelName = this.config.getChannelNameForId(noExtensionSoundName);
-        String channelDescription = this.config.getChannelDescriptionForId(noExtensionSoundName);
+        String channelName = this.config.getChannelNameForId(noExtensionSoundName, isQuake);
+        String channelDescription = this.config.getChannelDescriptionForId(noExtensionSoundName, isQuake);
 
         int importance = NotificationManager.IMPORTANCE_HIGH;
         final String importanceString = bundle.getString("importance");

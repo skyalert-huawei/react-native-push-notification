@@ -82,10 +82,11 @@ class RNPushNotificationConfig {
         return "fcm_fallback_notification_channel";
     }
 
-    public String getChannelNameForId(String soundName) {
-        if (soundName != null) {
+    public String getChannelNameForId(String soundName, boolean isQuake) {
+        if (isQuake) {
             try {
-                return metadata.getString(KEY_CHANNEL_NAME + "." + soundName);
+                String channelSoundSuffix = soundName != null ? soundName : "silent";
+                return metadata.getString(KEY_CHANNEL_NAME + "." + channelSoundSuffix);
             } catch (Exception e) {
                 Log.w(RNPushNotification.LOG_TAG, "Unable to find " + KEY_CHANNEL_NAME + "." + soundName + " in manifest. Falling back to default");
             }
@@ -93,10 +94,11 @@ class RNPushNotificationConfig {
         // Default
         return "rn-push-notification-channel";
     }
-    public String getChannelDescriptionForId(String soundName) {
-        if (soundName != null) {
+    public String getChannelDescriptionForId(String soundName, boolean isQuake) {
+        if (isQuake) {
             try {
-                return metadata.getString(KEY_CHANNEL_DESCRIPTION + "." + soundName);
+                String channelSoundSuffix = soundName != null ? soundName : "silent";
+                return metadata.getString(KEY_CHANNEL_NAME + "." + channelSoundSuffix);
             } catch (Exception e) {
                 Log.w(RNPushNotification.LOG_TAG, "Unable to find " + KEY_CHANNEL_DESCRIPTION + "." + soundName + " in manifest. Falling back to default");
             }
