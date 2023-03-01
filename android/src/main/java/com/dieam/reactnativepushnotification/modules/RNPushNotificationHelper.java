@@ -1100,7 +1100,7 @@ public class RNPushNotificationHelper {
 
             channel.setSound(soundUri, audioAttributes);
         }
-        if(soundName == null) {
+        if(soundName == null && isQuake == true) {
             channel.setSound(null, null);
         }
 
