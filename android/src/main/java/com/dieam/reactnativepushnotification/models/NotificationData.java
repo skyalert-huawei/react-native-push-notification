@@ -11,6 +11,5 @@ public class NotificationData {
     public NotificationData(JSONObject notification) throws JSONException {
         this.title = notification.getString("title");
         this.message = notification.getString("message");
-        this.soundName = notification.getString("soundName");
     }
 }

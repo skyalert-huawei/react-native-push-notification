@@ -482,7 +482,7 @@ public class RNPushNotificationHelper {
             if (messageId != null) {
                 intent.putExtra("message_id", messageId);
             }
-
+            boolean isQuake = bundle.getString("quake", null) != null;
             Uri soundUri = null;
             String soundName = null;
             if (!bundle.containsKey("playSound") || bundle.getBoolean("playSound")) {
@@ -491,7 +491,7 @@ public class RNPushNotificationHelper {
                 soundUri = getSoundUri(soundName);
 
                 notification.setSound(soundUri);
-                channel_id = getChannelId(soundName, soundUri);
+                channel_id = getChannelId(soundName, soundUri, isQuake);
             }
 
             if (soundUri == null || Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -588,7 +588,8 @@ public class RNPushNotificationHelper {
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE : PendingIntent.FLAG_UPDATE_CURRENT);
 
             NotificationManager notificationManager = notificationManager();
-            checkOrCreateChannel(notificationManager, soundName, soundUri);
+
+            checkOrCreateChannel(notificationManager, soundName, soundUri, isQuake);
 
             long[] vibratePattern = new long[]{0};
 
@@ -710,7 +711,7 @@ public class RNPushNotificationHelper {
                 editor.apply();
             }
 
-            if(bundle.getString("quake", null) != null) {
+            if(isQuake) {
                 storeAlertEvent(bundle);
             }
 
@@ -1031,20 +1032,25 @@ public class RNPushNotificationHelper {
     }
 
     @TargetApi(26)
-    private void checkOrCreateChannel(NotificationManager manager, String soundName, Uri soundUri) {
+    private void checkOrCreateChannel(NotificationManager manager, String soundName, Uri soundUri, boolean isQuake) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             return;
         if (manager == null)
             return;
 
-        String channelId = this.getChannelId(soundName, soundUri);
+
+        String channelId = this.getChannelId(soundName, soundUri, isQuake);
 
         if (manager.getNotificationChannel(channelId) != null) {
             return;
         }
 
         Bundle bundle = new Bundle();
-        String noExtensionSoundName = soundName.substring(0, soundName.lastIndexOf('.'));
+
+        String noExtensionSoundName = null;
+        if(soundName != null) {
+            noExtensionSoundName = soundName.substring(0, soundName.lastIndexOf('.'));
+        }
 
         String channelName = this.config.getChannelNameForId(noExtensionSoundName);
         String channelDescription = this.config.getChannelDescriptionForId(noExtensionSoundName);
@@ -1094,6 +1100,9 @@ public class RNPushNotificationHelper {
 
             channel.setSound(soundUri, audioAttributes);
         }
+        if(soundName == null) {
+            channel.setSound(null, null);
+        }
 
         manager.createNotificationChannel(channel);
     }
@@ -1134,8 +1143,11 @@ public class RNPushNotificationHelper {
         return false;
     }
 
-    private String getChannelId(String soundName, Uri soundUri) {
+    private String getChannelId(String soundName, Uri soundUri, boolean isQuake) {
         String channelPrefix = this.config.getChannelPrefix();
+        if(soundName == null && isQuake) {
+            return "secondary-locations-alert";
+        }
         return (soundName != null && soundUri != null) ? channelPrefix + soundName : NOTIFICATION_CHANNEL_ID;
     }
 
