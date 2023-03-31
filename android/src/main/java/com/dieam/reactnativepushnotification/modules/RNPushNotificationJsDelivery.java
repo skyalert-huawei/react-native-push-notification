@@ -24,7 +24,7 @@ public class RNPushNotificationJsDelivery {
         mReactContext = reactContext;
     }
 
-    void sendEvent(String eventName, Object params) {
+    public void sendEvent(String eventName, Object params) {
         if (mReactContext.hasActiveCatalystInstance()) {
             mReactContext
                     .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
@@ -32,14 +32,14 @@ public class RNPushNotificationJsDelivery {
         }
     }
 
-    void notifyRemoteFetch(Bundle bundle) {
+    public void notifyRemoteFetch(Bundle bundle) {
         String bundleString = convertJSON(bundle);
         WritableMap params = Arguments.createMap();
         params.putString("dataJSON", bundleString);
         sendEvent("remoteFetch", params);
     }
 
-    void notifyNotification(Bundle bundle) {
+    public void notifyNotification(Bundle bundle) {
         String bundleString = convertJSON(bundle);
 
         WritableMap params = Arguments.createMap();
@@ -48,7 +48,7 @@ public class RNPushNotificationJsDelivery {
         sendEvent("remoteNotificationReceived", params);
     }
 
-    void notifyNotificationAction(Bundle bundle) {
+    public void notifyNotificationAction(Bundle bundle) {
         String bundleString = convertJSON(bundle);
 
         WritableMap params = Arguments.createMap();
@@ -57,7 +57,7 @@ public class RNPushNotificationJsDelivery {
         sendEvent("notificationActionReceived", params);
     }
 
-    String convertJSON(Bundle bundle) {
+    public String convertJSON(Bundle bundle) {
         try {
             JSONObject json = convertJSONObject(bundle);
             return json.toString();

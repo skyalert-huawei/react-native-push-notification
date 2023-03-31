@@ -1,8 +1,5 @@
 package com.dieam.reactnativepushnotification.modules;
 
-import com.google.firebase.messaging.FirebaseMessagingService;
-import com.google.firebase.messaging.RemoteMessage;
-
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Application;
@@ -31,101 +28,13 @@ import static android.content.Context.ACTIVITY_SERVICE;
 import static com.dieam.reactnativepushnotification.modules.RNPushNotification.LOG_TAG;
 
 public class RNReceivedMessageHandler {
-    private FirebaseMessagingService mFirebaseMessagingService;
+    private Application mApplication;
 
-    public RNReceivedMessageHandler(@NonNull FirebaseMessagingService service) {
-        this.mFirebaseMessagingService = service;
+    public RNReceivedMessageHandler(@NonNull Application service) {
+        this.mApplication = service;
     }
 
-    public void handleReceivedMessage(RemoteMessage message) {
-        String from = message.getFrom();
-        RemoteMessage.Notification remoteNotification = message.getNotification();
-        final Bundle bundle = new Bundle();
-        // Putting it from remoteNotification first so it can be overriden if message
-        // data has it
-        if (remoteNotification != null) {
-            // ^ It's null when message is from GCM
-            RNPushNotificationConfig config = new RNPushNotificationConfig(mFirebaseMessagingService.getApplication());  
-
-            String title = getLocalizedString(remoteNotification.getTitle(), remoteNotification.getTitleLocalizationKey(), remoteNotification.getTitleLocalizationArgs());
-            String body = getLocalizedString(remoteNotification.getBody(), remoteNotification.getBodyLocalizationKey(), remoteNotification.getBodyLocalizationArgs());
-
-            bundle.putString("title", title);
-            bundle.putString("message", body);
-            bundle.putString("sound", remoteNotification.getSound());
-            bundle.putString("color", remoteNotification.getColor());
-            bundle.putString("tag", remoteNotification.getTag());
-            
-            if(remoteNotification.getIcon() != null) {
-              bundle.putString("smallIcon", remoteNotification.getIcon());
-            } else {
-              bundle.putString("smallIcon", "ic_notification");
-            }
-            
-            if(remoteNotification.getChannelId() != null) {
-              bundle.putString("channelId", remoteNotification.getChannelId());
-            }
-            else {
-              bundle.putString("channelId", config.getNotificationDefaultChannelId());
-            }
-
-            Integer visibilty = remoteNotification.getVisibility();
-            String visibilityString = "private";
-
-            if (visibilty != null) {
-                switch (visibilty) {
-                    case NotificationCompat.VISIBILITY_PUBLIC:
-                        visibilityString = "public";
-                        break;
-                    case NotificationCompat.VISIBILITY_SECRET:
-                        visibilityString = "secret";
-                        break;
-                }
-            }
-          
-            bundle.putString("visibility", visibilityString);
-
-            Integer priority = remoteNotification.getNotificationPriority();
-            String priorityString = "high";
-            
-            if (priority != null) {
-              switch (priority) {
-                  case NotificationCompat.PRIORITY_MAX:
-                      priorityString = "max";
-                      break;
-                  case NotificationCompat.PRIORITY_LOW:
-                      priorityString = "low";
-                      break;
-                  case NotificationCompat.PRIORITY_MIN:
-                      priorityString = "min";
-                      break;
-                  case NotificationCompat.PRIORITY_DEFAULT:
-                      priorityString = "default";
-                      break;
-              }
-            }
-
-            bundle.putString("priority", priorityString);
-
-            Uri uri = remoteNotification.getImageUrl();
-
-            if(uri != null) {
-                String imageUrl = uri.toString();
-              
-                bundle.putString("bigPictureUrl", imageUrl);
-                bundle.putString("largeIconUrl", imageUrl);
-            }
-        }
-
-        Bundle dataBundle = new Bundle();
-        Map<String, String> notificationData = message.getData();
-        
-        for(Map.Entry<String, String> entry : notificationData.entrySet()) {
-            dataBundle.putString(entry.getKey(), entry.getValue());
-        }
-
-        bundle.putParcelable("data", dataBundle);
-
+    public void handleReceivedMessage(Bundle bundle) {
         Log.v(LOG_TAG, "onMessageReceived: " + bundle);
 
         // We need to run this on the main thread, as the React code assumes that is true.
@@ -135,7 +44,7 @@ public class RNReceivedMessageHandler {
         handler.post(new Runnable() {
             public void run() {
                 // Construct and load our normal React JS code bundle
-                final ReactInstanceManager mReactInstanceManager = ((ReactApplication) mFirebaseMessagingService.getApplication()).getReactNativeHost().getReactInstanceManager();
+                final ReactInstanceManager mReactInstanceManager = ((ReactApplication) mApplication).getReactNativeHost().getReactInstanceManager();
                 ReactContext context = mReactInstanceManager.getCurrentReactContext();
                 // If it's constructed, send a notificationre
                 if (context != null) {
@@ -167,7 +76,7 @@ public class RNReceivedMessageHandler {
 
         Application applicationContext = (Application) context.getApplicationContext();
 
-        RNPushNotificationConfig config = new RNPushNotificationConfig(mFirebaseMessagingService.getApplication());  
+        RNPushNotificationConfig config = new RNPushNotificationConfig(mApplication);
         RNPushNotificationHelper pushNotificationHelper = new RNPushNotificationHelper(applicationContext);
 
         boolean isForeground = pushNotificationHelper.isApplicationInForeground();
@@ -194,7 +103,7 @@ public class RNReceivedMessageHandler {
           return text;
         }
 
-        Context context = mFirebaseMessagingService.getApplicationContext();
+        Context context = mApplication.getApplicationContext();
         String packageName = context.getPackageName();
 
         String result = null;
