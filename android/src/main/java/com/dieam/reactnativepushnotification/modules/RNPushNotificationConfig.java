@@ -7,7 +7,7 @@ import androidx.core.content.res.ResourcesCompat;
 import android.os.Bundle;
 import android.util.Log;
 
-class RNPushNotificationConfig {
+public class RNPushNotificationConfig {
     private static final String KEY_NOTIFICATION_FIREBASE_DEFAULT_CHANNEL_ID = "com.google.firebase.messaging.default_notification_channel_id";
     private static final String KEY_NOTIFICATION_DEFAULT_CHANNEL_ID = "com.dieam.reactnativepushnotification.default_notification_channel_id";
     private static final String KEY_NOTIFICATION_FOREGROUND = "com.dieam.reactnativepushnotification.notification_foreground";
