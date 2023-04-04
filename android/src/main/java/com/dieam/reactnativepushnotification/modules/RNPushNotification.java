@@ -132,9 +132,7 @@ public class RNPushNotification extends ReactContextBaseJavaModule
 
     @ReactMethod
     public void requestPermissions() {
-        final RNPushNotificationJsDelivery fMjsDelivery = mJsDelivery;
-        Application applicationContext = (Application) getReactApplicationContext();
-        RNPushServiceHelper.getToken(applicationContext.getApplicationContext(), this);
+        RNPushServiceHelper.getToken(getReactApplicationContext().getApplicationContext(), this);
     }
 
     @Override
@@ -146,14 +144,12 @@ public class RNPushNotification extends ReactContextBaseJavaModule
 
     @ReactMethod
     public void subscribeToTopic(String topic) {
-        Application applicationContext = (Application) getReactApplicationContext();
-        RNPushServiceHelper.subscribeToTopic(applicationContext.getApplicationContext(), topic);
+        RNPushServiceHelper.subscribeToTopic(getReactApplicationContext().getApplicationContext(), topic);
     }
 
     @ReactMethod
     public void unsubscribeFromTopic(String topic) {
-        Application applicationContext = (Application) getReactApplicationContext();
-        RNPushServiceHelper.unsubscribeFromTopic(applicationContext.getApplicationContext(), topic);
+        RNPushServiceHelper.unsubscribeFromTopic(getReactApplicationContext().getApplicationContext(), topic);
     }
 
     @ReactMethod
@@ -273,8 +269,7 @@ public class RNPushNotification extends ReactContextBaseJavaModule
      * Unregister for all remote notifications received
      */
     public void abandonPermissions() {
-        Application applicationContext = (Application) getReactApplicationContext();
-        RNPushServiceHelper.deleteToken(applicationContext.getApplicationContext());
+        RNPushServiceHelper.deleteToken(getReactApplicationContext().getApplicationContext());
         Log.i(LOG_TAG, "InstanceID deleted");
     }
 
